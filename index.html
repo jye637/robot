@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Play, RotateCcw, ArrowUp, ArrowLeft, ArrowRight, Star, Camera, RefreshCw, Trophy, AlertCircle, ChevronRight, Home } from 'lucide-react';
+import { Play, RotateCcw, ArrowUp, ArrowLeft, ArrowRight, Star, Camera, RefreshCw, Trophy, AlertCircle, ChevronRight, Home, Zap } from 'lucide-react';
 
 // --- Constants & Config ---
 const SCHOOL_NAME = "高雄市蔡文國小";
@@ -7,645 +7,675 @@ const GAME_TITLE = "Canva AI 體驗：小小程式設計師";
 
 // --- Level Configuration ---
 const LEVELS = [
-  {
-    id: 1,
-    name: "初級：暖身練習",
-    description: "熟悉機器人操作，走出第一步！",
-    gridSize: 3,
-    // 0: Path, 1: Wall, 2: Start, 3: Goal
-    layout: [
-      [2, 0, 1],
-      [1, 0, 3],
-      [1, 1, 1]
-    ],
-    start: { x: 0, y: 0, dir: 1 }, // Facing East
-    goal: { x: 2, y: 1 },
-    maxCommands: 10,
-    certTitle: "我會控制機器人",
-    certColor: "text-blue-500"
-  },
-  {
-    id: 2,
-    name: "中級：迷宮探險",
-    description: "路變長了，小心不要撞到牆壁喔！",
-    gridSize: 4,
-    layout: [
-      [2, 0, 0, 1],
-      [1, 1, 0, 1],
-      [0, 0, 0, 0],
-      [0, 1, 1, 3]
-    ],
-    start: { x: 0, y: 0, dir: 1 }, // Facing East
-    goal: { x: 3, y: 3 },
-    maxCommands: 15,
-    certTitle: "程式探險家",
-    certColor: "text-purple-500"
-  },
-  {
-    id: 3,
-    name: "高級：大師挑戰",
-    description: "複雜的迷宮！這是給五年級高手的挑戰！",
-    gridSize: 5,
-    layout: [
-      [1, 3, 0, 0, 1],
-      [1, 1, 1, 0, 1],
-      [0, 0, 0, 0, 1],
-      [0, 1, 1, 1, 1],
-      [2, 0, 0, 0, 0]
-    ],
-    start: { x: 0, y: 4, dir: 1 }, // Facing East
-    goal: { x: 1, y: 0 },
-    maxCommands: 20,
-    certTitle: "程式設計大師",
-    certColor: "text-yellow-500"
-  }
+  {
+    id: 1,
+    name: "初級：暖身練習",
+    description: "熟悉機器人操作，走出第一步！",
+    gridSize: 3,
+    // 0: Path, 1: Wall, 2: Start, 3: Goal
+    layout: [
+      [2, 0, 1],
+      [1, 0, 3],
+      [1, 1, 1]
+    ],
+    start: { x: 0, y: 0, dir: 1 }, // Facing East (0: N, 1: E, 2: S, 3: W)
+    goal: { x: 2, y: 1 },
+    maxCommands: 6, // 降低初級指令數
+    certTitle: "我會控制機器人",
+    certColor: "text-blue-500"
+  },
+  {
+    id: 2,
+    name: "中級：迷宮探險",
+    description: "路變長了，小心不要撞到牆壁喔！",
+    gridSize: 4,
+    layout: [
+      [2, 0, 0, 1],
+      [1, 1, 0, 1],
+      [0, 0, 0, 0],
+      [0, 1, 1, 3]
+    ],
+    start: { x: 0, y: 0, dir: 1 }, // Facing East
+    goal: { x: 3, y: 3 },
+    maxCommands: 10, // 降低中級指令數
+    certTitle: "程式探險家",
+    certColor: "text-purple-500"
+  },
+  {
+    id: 3,
+    name: "高級：大師挑戰",
+    description: "複雜的迷宮！這是給五年級高手的挑戰！",
+    gridSize: 5,
+    layout: [
+      [1, 3, 0, 0, 1],
+      [1, 1, 1, 0, 1],
+      [0, 0, 0, 0, 1],
+      [0, 1, 1, 1, 1],
+      [2, 0, 0, 0, 0]
+    ],
+    start: { x: 0, y: 4, dir: 1 }, // Facing East
+    goal: { x: 1, y: 0 },
+    maxCommands: 15, // 降低高級指令數
+    certTitle: "程式設計大師",
+    certColor: "text-yellow-500"
+  }
 ];
 
 // --- Components ---
 
-const RobotIcon = ({ className, mood = "happy" }) => (
-  <svg viewBox="0 0 100 100" className={className}>
-    <style>{`
-      @keyframes shake {
-        0%, 100% { transform: translateX(0); }
-        25% { transform: translateX(-5px); }
-        75% { transform: translateX(5px); }
-      }
-      .animate-shake {
-        animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both infinite;
-      }
-    `}</style>
-    <g className={mood === "dance" ? "animate-bounce" : mood === "shake" ? "animate-shake" : ""}>
-      
-      {/* 頭頂箭頭: 紅色 (#EF4444) */}
-      <polygon points="45,15 55,15 50,5" fill="#EF4444" stroke="black" strokeWidth="2" className="drop-shadow-sm" />
+const RobotIcon = ({ className, mood = "happy", rotation = 0 }) => (
+  <svg viewBox="0 0 100 100" className={className}>
+    <style>{`
+      @keyframes shake {
+        0%, 100% { transform: translate(0); }
+        25% { transform: translate(-3px, 3px); }
+        75% { transform: translate(3px, -3px); }
+      }
+      .animate-shake-icon {
+        animation: shake 0.3s cubic-bezier(.36,.07,.19,.97) both infinite;
+      }
+      @keyframes bounce-icon {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+      }
+      .animate-bounce-icon {
+        animation: bounce-icon 1s infinite;
+      }
+    `}</style>
+    <g className={mood === "dance" ? "animate-bounce-icon" : mood === "error" ? "animate-shake-icon" : ""}>
+      
+      {/* Body */}
+      <rect x="30" y="30" width="40" height="60" rx="10" 
+        fill={mood === "error" ? "#FCA5A5" : "#60A5FA"} 
+        stroke={mood === "error" ? "#DC2626" : "#2563EB"} 
+        strokeWidth="3" 
+      />
+      
+      {/* Head (Lighter) */}
+      <rect x="25" y="20" width="50" height="40" rx="8" 
+        fill={mood === "error" ? "#FDBA74" : "#A78BFA"} 
+        stroke={mood === "error" ? "#DC2626" : "#7C3AED"} 
+        strokeWidth="3" 
+      />
 
-      {/* Antennas */}
-      <line x1="30" y1="20" x2="20" y2="10" stroke="#374151" strokeWidth="4" />
-      <circle cx="20" cy="10" r="4" fill={mood === "error" ? "#EF4444" : "#EF4444"} />
-      <line x1="70" y1="20" x2="80" y2="10" stroke="#374151" strokeWidth="4" />
-      <circle cx="80" cy="10" r="4" fill={mood === "error" ? "#EF4444" : "#EF4444"} />
-      
-      {/* Head */}
-      <rect x="25" y="20" width="50" height="40" rx="10" 
-        fill={mood === "error" ? "#FCA5A5" : "#60A5FA"} 
-        stroke={mood === "error" ? "#DC2626" : "#2563EB"} 
-        strokeWidth="3" 
-      />
-      
-      {/* Eyes */}
-      <circle cx="40" cy="35" r="5" fill="white" />
-      <circle cx="40" cy="35" r="2" fill="black" />
-      <circle cx="60" cy="35" r="5" fill="white" />
-      <circle cx="60" cy="35" r="2" fill="black" />
+      {/* Antenna / Top Light */}
+      <line x1="50" y1="20" x2="50" y2="5" stroke="#374151" strokeWidth="4" />
+      <circle cx="50" cy="5" r="4" fill={mood === "error" ? "#DC2626" : "#FCD34D"} />
+      
+      {/* Eyes */}
+      <circle cx="40" cy="35" r="6" fill="white" stroke="black" strokeWidth="1" />
+      <circle cx="60" cy="35" r="6" fill="white" stroke="black" strokeWidth="1" />
+      <circle cx="40" cy="35" r="3" fill="black" />
+      <circle cx="60" cy="35" r="3" fill="black" />
 
-      {/* Mouth */}
-      {mood === "sad" || mood === "error" ? (
-        <path d="M 40 50 Q 50 45 60 50" stroke="white" strokeWidth="3" fill="none" />
-      ) : (
-        <path d="M 40 45 Q 50 55 60 45" stroke="white" strokeWidth="3" fill="none" />
-      )}
+      {/* Mouth (LED) */}
+      {mood === "sad" || mood === "error" ? (
+        <path d="M 40 50 Q 50 45 60 50" stroke="#DC2626" strokeWidth="3" fill="none" />
+      ) : (
+        <path d="M 40 48 C 45 53 55 53 60 48" stroke="#34D399" strokeWidth="3" fill="none" />
+      )}
 
-      {/* Body */}
-      <rect x="30" y="65" width="40" height="30" rx="5" 
-        fill={mood === "error" ? "#FCA5A5" : "#A78BFA"} 
-        stroke={mood === "error" ? "#DC2626" : "#7C3AED"} 
-        strokeWidth="3" 
-      />
-      
-      {/* Details */}
-      <circle cx="50" cy="80" r="8" fill="#FCD34D" />
-      
-      {/* Crash marks if error */}
-      {mood === "error" && (
-        <path d="M 20 20 L 40 40 M 80 20 L 60 40" stroke="#DC2626" strokeWidth="4" strokeLinecap="round" />
-      )}
-    </g>
-  </svg>
+      {/* Chest Screen */}
+      <rect x="35" y="65" width="30" height="15" rx="3" fill="#374151" />
+      <Zap x="42.5" y="68" width="15" height="15" color="#FCD34D" fill="#FCD34D" />
+
+      {/* Crash marks if error */}
+      {mood === "error" && (
+        <path d="M 35 30 L 65 50 M 65 30 L 35 50" stroke="#DC2626" strokeWidth="4" strokeLinecap="round" />
+      )}
+    </g>
+  </svg>
 );
 
 export default function App() {
-  const [page, setPage] = useState(1);
-  const [currentLevelIndex, setCurrentLevelIndex] = useState(0); // 0, 1, 2
-  const [commands, setCommands] = useState([]);
-  const [robotState, setRobotState] = useState(LEVELS[0].start);
-  const [executionStep, setExecutionStep] = useState(-1);
-  const [isAnimating, setIsAnimating] = useState(false);
-  const [errorIndex, setErrorIndex] = useState(-1);
+  const [page, setPage] = useState(1);
+  const [currentLevelIndex, setCurrentLevelIndex] = useState(0); // 0, 1, 2
+  const [commands, setCommands] = useState([]);
+  const [robotState, setRobotState] = useState(LEVELS[0].start);
+  const [executionStep, setExecutionStep] = useState(-1);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [errorIndex, setErrorIndex] = useState(-1);
 
-  const currentLevel = LEVELS[currentLevelIndex];
+  const currentLevel = LEVELS[currentLevelIndex];
 
-  // 完全重置回首頁
-  const resetGameFull = () => {
-    setCommands([]);
-    setCurrentLevelIndex(0);
-    setRobotState(LEVELS[0].start);
-    setExecutionStep(-1);
-    setIsAnimating(false);
-    setErrorIndex(-1);
-    setPage(1);
-  };
+  // 完全重置回首頁
+  const resetGameFull = () => {
+    setCommands([]);
+    setCurrentLevelIndex(0);
+    setRobotState(LEVELS[0].start);
+    setExecutionStep(-1);
+    setIsAnimating(false);
+    setErrorIndex(-1);
+    setPage(1);
+  };
 
-  // 重置當前關卡
-  const resetLevel = () => {
-    setCommands([]);
-    setRobotState(currentLevel.start);
-    setExecutionStep(-1);
-    setIsAnimating(false);
-    setErrorIndex(-1);
-  };
+  // 重置當前關卡
+  const resetLevel = () => {
+    setCommands([]);
+    setRobotState(currentLevel.start);
+    setExecutionStep(-1);
+    setIsAnimating(false);
+    setErrorIndex(-1);
+  };
 
-  // 進入下一關
-  const nextLevel = () => {
-    if (currentLevelIndex < LEVELS.length - 1) {
-      const nextIdx = currentLevelIndex + 1;
-      setCurrentLevelIndex(nextIdx);
-      setCommands([]);
-      setRobotState(LEVELS[nextIdx].start);
-      setExecutionStep(-1);
-      setIsAnimating(false);
-      setErrorIndex(-1);
-      setPage(3); // Go to game page
-    } else {
-      // 已經是最後一關，回到首頁或顯示最終畫面
-      resetGameFull();
-    }
-  };
+  // 進入下一關
+  const nextLevel = () => {
+    if (currentLevelIndex < LEVELS.length - 1) {
+      const nextIdx = currentLevelIndex + 1;
+      setCurrentLevelIndex(nextIdx);
+      setCommands([]);
+      setRobotState(LEVELS[nextIdx].start);
+      setExecutionStep(-1);
+      setIsAnimating(false);
+      setErrorIndex(-1);
+      setPage(3); // Go to game page
+    } else {
+      // 已經是最後一關，回到首頁
+      resetGameFull();
+    }
+  };
 
-  const addCommand = (cmd) => {
-    if (commands.length < currentLevel.maxCommands) {
-      setCommands([...commands, cmd]);
-    }
-  };
+  const addCommand = (cmd) => {
+    if (!isAnimating && commands.length < currentLevel.maxCommands) {
+      setCommands([...commands, cmd]);
+    }
+  };
 
-  const removeCommand = (index) => {
-    if (!isAnimating) {
-      const newCmds = [...commands];
-      newCmds.splice(index, 1);
-      setCommands(newCmds);
-    }
-  };
+  const removeCommand = (index) => {
+    if (!isAnimating) {
+      const newCmds = [...commands];
+      newCmds.splice(index, 1);
+      setCommands(newCmds);
+    }
+  };
 
-  const runSimulation = async () => {
-    if (commands.length === 0) return;
-    setIsAnimating(true);
-    setExecutionStep(0);
-    setErrorIndex(-1);
-    setRobotState(currentLevel.start);
-  };
+  const runSimulation = async () => {
+    if (commands.length === 0 || isAnimating) return;
+    setIsAnimating(true);
+    setExecutionStep(0);
+    setErrorIndex(-1);
+    setRobotState(currentLevel.start);
+  };
 
-  // Execution Logic
-  useEffect(() => {
-    if (executionStep >= 0 && executionStep < commands.length && errorIndex === -1) {
-      
-      // 防止因為 React 狀態更新導致重複執行最後一步
-      if (robotState.x === currentLevel.goal.x && robotState.y === currentLevel.goal.y) {
-        return;
-      }
+  // Execution Logic
+  useEffect(() => {
+    if (executionStep >= 0 && executionStep < commands.length && errorIndex === -1 && isAnimating) {
+      
+      // Check immediate win condition before executing the next step
+      if (robotState.x === currentLevel.goal.x && robotState.y === currentLevel.goal.y) {
+        setIsAnimating(false);
+        setPage(5);
+        return;
+      }
 
-      const timer = setTimeout(() => {
-        const cmd = commands[executionStep];
-        let nextState = { ...robotState };
+      const timer = setTimeout(() => {
+        const cmd = commands[executionStep];
+        let nextState = { ...robotState };
+        let collision = false;
 
-        if (cmd === 'F') {
-          if (nextState.dir === 0) nextState.y -= 1; // North
-          if (nextState.dir === 1) nextState.x += 1; // East
-          if (nextState.dir === 2) nextState.y += 1; // South
-          if (nextState.dir === 3) nextState.x -= 1; // West
-        } else if (cmd === 'L') {
-          nextState.dir = (nextState.dir - 1 + 4) % 4;
-        } else if (cmd === 'R') {
-          nextState.dir = (nextState.dir + 1) % 4;
-        }
+        if (cmd === 'L') {
+          nextState.dir = (nextState.dir - 1 + 4) % 4;
+        } else if (cmd === 'R') {
+          nextState.dir = (nextState.dir + 1) % 4;
+        } else if (cmd === 'F') {
+          let dx = 0, dy = 0;
+          if (nextState.dir === 0) dy = -1; // North
+          if (nextState.dir === 1) dx = 1;  // East
+          if (nextState.dir === 2) dy = 1;  // South
+          if (nextState.dir === 3) dx = -1; // West
 
-        // --- 邊界與碰撞檢查 ---
-        const isOutOfBounds = nextState.x < 0 || nextState.x >= currentLevel.gridSize || 
-                              nextState.y < 0 || nextState.y >= currentLevel.gridSize;
+          const nextX = nextState.x + dx;
+          const nextY = nextState.y + dy;
 
-        let isWall = false;
-        if (!isOutOfBounds) {
-          if (currentLevel.layout[nextState.y][nextState.x] === 1) {
-            isWall = true;
-          }
-        }
+          // --- 邊界與碰撞檢查 (Check BEFORE moving) ---
+          const isOutOfBounds = nextX < 0 || nextX >= currentLevel.gridSize || 
+                              nextY < 0 || nextY >= currentLevel.gridSize;
+          
+          let isWall = false;
+          if (!isOutOfBounds) {
+            if (currentLevel.layout[nextY][nextX] === 1) {
+              isWall = true;
+            }
+          }
 
-        if (isWall || isOutOfBounds) {
-          // 碰撞錯誤!
-          setErrorIndex(executionStep);
-          setTimeout(() => {
-            setPage(4);
-            setIsAnimating(false);
-          }, 2000);
-        } else {
-          // 有效移動
-          setRobotState(nextState);
-          
-          // 檢查勝利條件
-          if (nextState.x === currentLevel.goal.x && nextState.y === currentLevel.goal.y) {
-            // 到達終點
-            setTimeout(() => {
-              setPage(5); // 成功頁面
-              setIsAnimating(false);
-            }, 1000);
-          } else {
-            // 還有指令要執行
-            if (executionStep + 1 < commands.length) {
-              setExecutionStep(prev => prev + 1);
-            } else {
-              // 指令執行完畢，但未到達終點
-              setTimeout(() => {
-                setPage(4); // 失敗頁面
-                setIsAnimating(false);
-              }, 1000);
-            }
-          }
-        }
-      }, 800);
-      return () => clearTimeout(timer);
-    }
-  }, [executionStep, commands, robotState, errorIndex, currentLevel]);
+          if (isWall || isOutOfBounds) {
+            collision = true;
+            // If collision, the robot should not move, but the error index should be set.
+          } else {
+            nextState.x = nextX;
+            nextState.y = nextY;
+          }
+        }
+        
+        setRobotState(nextState);
+
+        if (collision) {
+          setErrorIndex(executionStep);
+          setTimeout(() => {
+            setPage(4);
+            setIsAnimating(false);
+          }, 1500); // Allow time for shake animation
+        } else {
+          // 有效移動或轉向
+          
+          // 檢查勝利條件 (在轉彎指令後，位置不變，但移動指令後要檢查)
+          if (nextState.x === currentLevel.goal.x && nextState.y === currentLevel.goal.y) {
+            // 到達終點
+            setTimeout(() => {
+              setPage(5); // 成功頁面
+              setIsAnimating(false);
+            }, 1000);
+          } else {
+            // 還有指令要執行
+            if (executionStep + 1 < commands.length) {
+              setExecutionStep(prev => prev + 1);
+            } else {
+              // 指令執行完畢，但未到達終點
+              setTimeout(() => {
+                setPage(4); // 失敗頁面
+                setIsAnimating(false);
+              }, 1000);
+            }
+          }
+        }
+      }, 700); // 加快執行速度到 700ms
+      return () => clearTimeout(timer);
+    }
+  }, [executionStep, commands, robotState, errorIndex, currentLevel, isAnimating]);
 
 
-  // --- Pages ---
+  // --- Pages ---
 
-  // Page 1: Cover
-  if (page === 1) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-500 via-indigo-600 to-purple-700 flex flex-col items-center justify-center p-4 text-white font-sans">
-        <div className="bg-white/10 backdrop-blur-md p-8 rounded-3xl shadow-2xl flex flex-col items-center text-center max-w-md w-full border border-white/20">
-          <div className="bg-blue-100 p-4 rounded-full mb-6 animate-bounce">
-            <RobotIcon className="w-32 h-32" />
-          </div>
-          <h1 className="text-3xl md:text-4xl font-bold mb-2 tracking-tight text-yellow-300 drop-shadow-md">
-            {GAME_TITLE}
-          </h1>
-          <h2 className="text-xl mb-8 font-light tracking-widest bg-blue-800/50 px-4 py-1 rounded-full">
-            {SCHOOL_NAME}
-          </h2>
-          
-          <div className="space-y-3 w-full">
-            <button 
-              onClick={() => { setCurrentLevelIndex(0); setPage(2); }}
-              className="group relative px-8 py-4 bg-yellow-400 hover:bg-yellow-300 text-blue-900 font-black text-xl rounded-2xl shadow-[0_4px_0_rgb(180,83,9)] active:shadow-none active:translate-y-1 transition-all w-full"
-            >
-              開始冒險
-              <span className="absolute right-4 top-1/2 -translate-y-1/2 group-hover:translate-x-1 transition-transform">
-                <Play fill="currentColor" size={24} />
-              </span>
-            </button>
-          </div>
-        </div>
-        <p className="mt-8 text-white/60 text-sm">Design for Kids Coding Education</p>
-      </div>
-    );
-  }
+  // Page 1: Cover
+  if (page === 1) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-indigo-700 via-blue-800 to-purple-900 flex flex-col items-center justify-center p-4 text-white font-sans">
+        <div className="bg-white/10 backdrop-blur-sm p-8 rounded-3xl shadow-2xl flex flex-col items-center text-center max-w-md w-full border border-white/20">
+          <div className="bg-white/20 p-4 rounded-full mb-6 animate-pulse">
+            <RobotIcon className="w-32 h-32" mood="happy" />
+          </div>
+          <h1 className="text-3xl md:text-4xl font-black mb-2 tracking-tight text-yellow-300 drop-shadow-lg">
+            {GAME_TITLE}
+          </h1>
+          <h2 className="text-xl mb-8 font-light tracking-widest bg-blue-600/50 px-4 py-1 rounded-full border border-blue-400">
+            {SCHOOL_NAME}
+          </h2>
+          
+          <div className="space-y-3 w-full">
+            <button 
+              onClick={() => { setCurrentLevelIndex(0); setPage(2); }}
+              className="group relative px-8 py-4 bg-yellow-400 hover:bg-yellow-300 text-blue-900 font-black text-xl rounded-2xl shadow-[0_6px_0_rgb(180,83,9)] active:shadow-none active:translate-y-1 transition-all w-full transform hover:scale-[1.02]"
+            >
+              開始冒險
+              <span className="absolute right-4 top-1/2 -translate-y-1/2 group-hover:translate-x-1 transition-transform">
+                <Play fill="currentColor" size={24} />
+              </span>
+            </button>
+          </div>
+        </div>
+        <p className="mt-8 text-white/60 text-sm">Design for Kids Coding Education</p>
+      </div>
+    );
+  }
 
-  // Page 2: Instructions (只在第一關前顯示，或可通用)
-  if (page === 2) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-400 to-purple-500 flex flex-col items-center justify-center p-4">
-        <div className="bg-white rounded-3xl shadow-xl p-8 max-w-lg w-full relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-4 bg-yellow-400"></div>
-          <h2 className="text-3xl font-bold text-blue-800 mb-6 text-center">怎麼幫我？</h2>
-          
-          <div className="space-y-4 mb-8">
-            <div className="flex items-center bg-blue-50 p-3 rounded-xl">
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4 text-2xl">🤖</div>
-              <p className="text-gray-700 font-bold">嗨！我迷路了，請幫我找到星星！</p>
-            </div>
-            <div className="flex items-center bg-purple-50 p-3 rounded-xl">
-              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-4">
-                <ArrowUp className="text-purple-600" />
-              </div>
-              <p className="text-gray-600">用指令卡片告訴我該怎麼走。</p>
-            </div>
-            {currentLevelIndex === 0 && (
-              <div className="flex items-start bg-yellow-50 p-3 rounded-xl border border-yellow-200">
-                <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center mr-4">
-                  <Trophy className="text-yellow-600" />
-                </div>
-                <div className="text-gray-600 text-left">
-                  <p className="font-bold text-gray-700">新手提示</p>
-                  <p className="text-xs mt-1">
-                    記得！「左轉」和「右轉」是改變機器人面對的方向，不是直接橫著走喔！
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
+  // Page 2: Instructions
+  if (page === 2) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-300 to-purple-400 flex flex-col items-center justify-center p-4">
+        <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-lg w-full relative overflow-hidden transform scale-100 transition-transform duration-500">
+          <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-yellow-400 to-orange-500"></div>
+          <h2 className="text-3xl font-black text-blue-800 mb-6 text-center border-b pb-2">程式小幫手說明</h2>
+          
+          <div className="space-y-4 mb-8">
+            <div className="flex items-center bg-blue-50 p-3 rounded-xl border border-blue-200 shadow-sm">
+              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-4 text-2xl">🌍</div>
+              <div>
+                <p className="text-gray-700 font-bold">目標</p>
+                <p className="text-sm text-gray-600">幫助機器人從綠色起點 (<span className='text-green-500 font-bold'>Start</span>) 走到黃色星星 (<span className='text-yellow-500 font-bold'>Goal</span>)。</p>
+              </div>
+            </div>
+            <div className="flex items-start bg-purple-50 p-3 rounded-xl border border-purple-200 shadow-sm">
+              <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center mr-4">
+                <ArrowUp className="text-purple-600" />
+              </div>
+              <div className="text-left">
+                <p className="text-gray-700 font-bold">指令卡片</p>
+                <ul className="list-disc list-inside text-sm text-gray-600 space-y-1 mt-1">
+                  <li>**向前 (⬆️)**: 機器人向目前方向移動一格。</li>
+                  <li>**左轉 (↩️)**: 機器人**原地**左轉 90 度。</li>
+                  <li>**右轉 (↪️)**: 機器人**原地**右轉 90 度。</li>
+                </ul>
+              </div>
+            </div>
+            <div className="flex items-center bg-red-50 p-3 rounded-xl border border-red-200 shadow-sm">
+              <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center mr-4">
+                <AlertCircle className="text-red-600" />
+              </div>
+              <div>
+                <p className="text-gray-700 font-bold">重要提醒</p>
+                <p className="text-sm text-gray-600">撞到**牆壁 (🧱)** 或超出地圖邊緣就會失敗喔！</p>
+              </div>
+            </div>
+          </div>
 
-          <button 
-            onClick={() => { resetLevel(); setPage(3); }}
-            className="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xl rounded-xl shadow-lg transition-colors"
-          >
-            我準備好了！
-          </button>
-        </div>
-      </div>
-    );
-  }
+          <button 
+            onClick={() => { resetLevel(); setPage(3); }}
+            className="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white font-black text-xl rounded-xl shadow-[0_6px_0_rgb(30,58,138)] active:shadow-none active:translate-y-1 transition-all"
+          >
+            我準備好了！開始 Level {currentLevel.id}
+          </button>
+        </div>
+      </div>
+    );
+  }
 
-  // Page 3: The Game
-  if (page === 3) {
-    return (
-      <div className="min-h-screen bg-slate-100 flex flex-col items-center p-4 md:p-8">
-        {/* Header */}
-        <div className="w-full max-w-4xl flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-          <div className="flex items-center gap-3">
-             <div className={`
-               px-4 py-1.5 rounded-full text-white font-bold text-sm shadow-sm
-               ${currentLevel.id === 1 ? 'bg-blue-500' : currentLevel.id === 2 ? 'bg-purple-500' : 'bg-yellow-500'}
-             `}>
-               Level {currentLevel.id}
-             </div>
-             <div>
-               <h2 className="text-xl font-bold text-slate-800">{currentLevel.name}</h2>
-               <p className="text-xs text-slate-500 hidden md:block">{currentLevel.description}</p>
-             </div>
-          </div>
-          <button onClick={resetGameFull} className="text-slate-400 hover:text-slate-600 flex items-center gap-1 text-sm bg-white px-3 py-1 rounded-full shadow-sm">
-            <Home size={16} /> 回首頁
-          </button>
-        </div>
+  // Page 3: The Game
+  if (page === 3) {
+    // Grid cell size calculation based on the grid size to keep it within a reasonable size
+    const gridSize = currentLevel.gridSize;
+    const maxMapSize = 400; // max size in px
+    const gapSize = 8; // 2 rem (4*2 = 8px)
+    const cellSize = Math.floor((maxMapSize - (gridSize - 1) * gapSize) / gridSize);
 
-        <div className="flex flex-col md:flex-row gap-8 w-full max-w-5xl flex-1">
-          {/* Left: Map */}
-          <div className="flex-1 bg-white p-6 rounded-3xl shadow-xl flex items-center justify-center min-h-[350px]">
-            <div 
-              className="grid gap-2 w-full max-w-[400px]"
-              style={{ 
-                gridTemplateColumns: `repeat(${currentLevel.gridSize}, minmax(0, 1fr))` 
-              }}
-            >
-              {Array.from({ length: currentLevel.gridSize * currentLevel.gridSize }).map((_, i) => {
-                const x = i % currentLevel.gridSize;
-                const y = Math.floor(i / currentLevel.gridSize);
-                const isWall = currentLevel.layout[y][x] === 1;
-                const isGoal = x === currentLevel.goal.x && y === currentLevel.goal.y;
-                const isRobot = x === robotState.x && y === robotState.y;
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-blue-100 flex flex-col items-center p-4 md:p-8">
+        {/* Header */}
+        <div className="w-full max-w-5xl flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+          <div className="flex items-center gap-3">
+             <div className={`
+               px-4 py-1.5 rounded-full text-white font-bold text-sm shadow-md
+               ${currentLevel.id === 1 ? 'bg-blue-500' : currentLevel.id === 2 ? 'bg-purple-500' : 'bg-yellow-500'}
+             `}>
+               Level {currentLevel.id}
+             </div>
+             <div>
+               <h2 className="text-xl font-black text-slate-800">{currentLevel.name}</h2>
+               <p className="text-sm text-slate-500 hidden md:block">{currentLevel.description}</p>
+             </div>
+          </div>
+          <button onClick={resetGameFull} className="text-slate-500 hover:text-indigo-600 flex items-center gap-1 text-sm bg-white px-3 py-1 rounded-full shadow-md border border-slate-200 transition-colors">
+            <Home size={16} /> 回首頁
+          </button>
+        </div>
 
-                return (
-                  <div key={i} className={`
-                    aspect-square rounded-xl flex items-center justify-center relative shadow-inner overflow-visible
-                    ${isWall ? 'bg-slate-300' : 'bg-blue-50 border border-blue-100'}
-                  `}>
-                    {isWall && <div className="text-2xl md:text-3xl opacity-50">🧱</div>}
-                    {isGoal && <Star className="w-8 h-8 md:w-10 md:h-10 text-yellow-400 fill-yellow-400 animate-pulse drop-shadow-lg" />}
-                    
-                    {isRobot && (
-                      <div 
-                        className="absolute w-4/5 h-4/5 transition-all duration-500 ease-in-out z-20 pointer-events-none"
-                        style={{ 
-                          top: '50%', 
-                          left: '50%',
-                          transform: `translate(-50%, -50%) rotate(${robotState.dir * 90}deg)`,
-                          transformOrigin: 'center', 
-                        }}
-                      >
-                          <RobotIcon 
-                           className={`w-full h-full ${errorIndex !== -1 ? 'animate-shake' : ''}`} 
-                           mood={errorIndex !== -1 ? "error" : "happy"} 
-                          />
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+        <div className="flex flex-col md:flex-row gap-8 w-full max-w-5xl flex-1">
+          {/* Left: Map */}
+          <div className="flex-1 bg-white p-4 md:p-6 rounded-3xl shadow-xl flex items-center justify-center min-h-[350px] order-2 md:order-1">
+            <div 
+              className="grid gap-2 w-full max-w-sm aspect-square"
+              style={{ 
+                gridTemplateColumns: `repeat(${gridSize}, minmax(0, 1fr))` 
+              }}
+            >
+              {Array.from({ length: gridSize * gridSize }).map((_, i) => {
+                const x = i % gridSize;
+                const y = Math.floor(i / gridSize);
+                const cellType = currentLevel.layout[y][x];
+                const isWall = cellType === 1;
+                const isGoal = x === currentLevel.goal.x && y === currentLevel.goal.y;
+                const isStart = cellType === 2;
+                const isRobot = x === robotState.x && y === robotState.y;
 
-          {/* Right: Controls */}
-          <div className="flex-1 flex flex-col gap-4">
-            
-            {/* Command Sequence Display */}
-            <div className="bg-white p-4 rounded-2xl shadow-md min-h-[140px] flex flex-col">
-              <h3 className="text-sm text-slate-400 font-bold mb-2 flex justify-between">
-                <span>指令序列</span>
-                <span className={`text-xs px-2 py-1 rounded font-bold ${commands.length >= currentLevel.maxCommands ? 'text-red-500 bg-red-100' : 'text-slate-500 bg-slate-100'}`}>
-                  {commands.length} / {currentLevel.maxCommands}
-                </span>
-              </h3>
-              <div className="flex gap-2 flex-wrap items-center content-start max-h-[160px] overflow-y-auto">
-                {commands.map((cmd, idx) => {
-                   const isCurrent = executionStep === idx;
-                   const isError = errorIndex === idx;
-                   return (
-                    <div 
-                      key={idx} 
-                      onClick={() => removeCommand(idx)}
-                      className={`
-                        w-10 h-10 md:w-12 md:h-12 rounded-lg flex items-center justify-center text-lg font-bold border-b-2 md:border-b-4 cursor-pointer transition-all relative shrink-0
-                        ${isCurrent ? 'scale-110 z-10 shadow-lg' : 'opacity-80 hover:opacity-100'}
-                        ${isError ? 'bg-red-500 text-white border-red-700 ring-2 ring-red-300' : ''}
-                        ${!isError && isCurrent ? 'ring-2 ring-yellow-400' : ''}
-                        ${!isError && cmd === 'F' ? 'bg-blue-100 text-blue-600 border-blue-300' : ''}
-                        ${!isError && cmd === 'L' ? 'bg-orange-100 text-orange-600 border-orange-300' : ''}
-                        ${!isError && cmd === 'R' ? 'bg-green-100 text-green-600 border-green-300' : ''}
-                      `}
-                    >
-                      {cmd === 'F' && <ArrowUp size={20} />}
-                      {cmd === 'L' && <ArrowLeft size={20} />}
-                      {cmd === 'R' && <ArrowRight size={20} />}
-                      
-                      <span className={`absolute -top-2 -right-2 w-4 h-4 text-[9px] rounded-full flex items-center justify-center border
-                        ${isError ? 'bg-white text-red-600' : 'bg-slate-700 text-white'}
-                      `}>
-                        {idx + 1}
-                      </span>
-                    </div>
-                  );
-                })}
-                {commands.length === 0 && (
-                  <div className="w-full h-20 border-2 border-dashed border-slate-200 rounded-xl flex items-center justify-center text-slate-400 text-sm">
-                    點擊下方按鈕加入指令...
-                  </div>
-                )}
-              </div>
-              {errorIndex !== -1 && (
-                <div className="mt-auto pt-2 text-red-500 font-bold text-sm flex items-center gap-1 animate-pulse">
-                  <AlertCircle size={16} /> 哎呀！撞到了！
-                </div>
-              )}
-            </div>
+                return (
+                  <div key={i} className={`
+                    aspect-square rounded-xl flex items-center justify-center relative shadow-md overflow-hidden transition-all duration-300
+                    ${isWall ? 'bg-slate-500' : 'bg-white border-4 border-slate-100'}
+                    ${isStart ? 'bg-green-100' : ''}
+                  `}>
+                    {isWall && <div className="text-3xl opacity-70">🧱</div>}
+                    {isGoal && <Star className="w-1/2 h-1/2 text-yellow-400 fill-yellow-400 animate-pulse drop-shadow-lg" />}
+                    {isStart && !isRobot && <div className="text-xl text-green-700 font-bold opacity-50">起點</div>}
+                    
+                    {isRobot && (
+                      <div 
+                        className="absolute w-full h-full p-1 transition-all duration-700 ease-in-out z-20 pointer-events-none"
+                        style={{ 
+                          // Grid cell position is handled by the parent grid
+                          transform: `rotate(${robotState.dir * 90}deg)`,
+                          transformOrigin: 'center', 
+                        }}
+                      >
+                          <RobotIcon 
+                           className={`w-full h-full ${errorIndex !== -1 ? 'animate-shake-icon' : isAnimating && commands[executionStep] === 'F' ? 'animate-pulse-once' : ''}`} 
+                           mood={errorIndex !== -1 ? "error" : "happy"} 
+                          />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
 
-            {/* Input Buttons */}
-            <div className="grid grid-cols-3 gap-3">
-               <button 
-                onClick={() => addCommand('L')}
-                disabled={isAnimating}
-                className="bg-orange-500 hover:bg-orange-400 disabled:opacity-50 text-white rounded-2xl p-3 md:p-4 shadow-[0_4px_0_rgb(194,65,12)] active:shadow-none active:translate-y-1 flex flex-col items-center gap-1 transition-all"
-              >
-                <ArrowLeft className="w-6 h-6 md:w-8 md:h-8" />
-                <span className="font-bold text-xs md:text-sm">左轉</span>
-              </button>
+          {/* Right: Controls */}
+          <div className="flex-1 flex flex-col gap-4 order-1 md:order-2">
+            
+            {/* Command Sequence Display */}
+            <div className="bg-white p-4 rounded-2xl shadow-xl min-h-[140px] flex flex-col border-t-4 border-indigo-400">
+              <h3 className="text-sm text-slate-500 font-bold mb-3 flex justify-between items-center">
+                <span>指令序列 (點擊移除)</span>
+                <span className={`text-xs px-2 py-1 rounded font-bold transition-colors ${commands.length >= currentLevel.maxCommands ? 'text-red-600 bg-red-100 border border-red-300' : 'text-indigo-600 bg-indigo-100 border border-indigo-300'}`}>
+                  限制：{commands.length} / {currentLevel.maxCommands}
+                </span>
+              </h3>
+              <div className="flex gap-2 flex-wrap items-center content-start max-h-[160px] overflow-y-auto p-1 -m-1">
+                {commands.map((cmd, idx) => {
+                   const isCurrent = executionStep === idx;
+                   const isError = errorIndex === idx;
+                   return (
+                    <div 
+                      key={idx} 
+                      onClick={() => removeCommand(idx)}
+                      className={`
+                        w-12 h-12 md:w-14 md:h-14 rounded-xl flex items-center justify-center text-lg font-bold border-b-4 cursor-pointer transition-all relative shrink-0
+                        ${isCurrent ? 'scale-110 z-10 shadow-lg ring-4 ring-offset-2 ring-yellow-400' : 'opacity-90 hover:opacity-100 shadow-md'}
+                        ${isError ? 'bg-red-500 text-white border-red-700 ring-4 ring-offset-2 ring-red-300 animate-pulse' : ''}
+                        ${!isError && cmd === 'F' ? 'bg-blue-200 text-blue-700 border-blue-400' : ''}
+                        ${!isError && cmd === 'L' ? 'bg-orange-200 text-orange-700 border-orange-400' : ''}
+                        ${!isError && cmd === 'R' ? 'bg-green-200 text-green-700 border-green-400' : ''}
+                      `}
+                    >
+                      {cmd === 'F' && <ArrowUp size={24} />}
+                      {cmd === 'L' && <ArrowLeft size={24} />}
+                      {cmd === 'R' && <ArrowRight size={24} />}
+                      
+                      <span className={`absolute -top-1 -right-1 w-5 h-5 text-xs rounded-full flex items-center justify-center border-2 border-white
+                        ${isError ? 'bg-red-600 text-white' : 'bg-slate-700 text-white'}
+                      `}>
+                        {idx + 1}
+                      </span>
+                    </div>
+                  );
+                })}
+                {commands.length === 0 && (
+                  <div className="w-full h-20 border-2 border-dashed border-indigo-200 rounded-xl flex items-center justify-center text-indigo-400 text-sm">
+                    點擊下方按鈕加入指令卡片...
+                  </div>
+                )}
+              </div>
+              {errorIndex !== -1 && (
+                <div className="mt-auto pt-2 text-red-500 font-black text-base flex items-center gap-1 animate-bounce">
+                  <AlertCircle size={20} className="fill-red-500 text-white" /> 哎呀！機器人撞到了！
+                </div>
+              )}
+            </div>
 
-              <button 
-                onClick={() => addCommand('F')}
-                disabled={isAnimating}
-                className="bg-blue-500 hover:bg-blue-400 disabled:opacity-50 text-white rounded-2xl p-3 md:p-4 shadow-[0_4px_0_rgb(30,58,138)] active:shadow-none active:translate-y-1 flex flex-col items-center gap-1 transition-all"
-              >
-                <ArrowUp className="w-6 h-6 md:w-8 md:h-8" />
-                <span className="font-bold text-xs md:text-sm">向前</span>
-              </button>
+            {/* Input Buttons */}
+            <div className="grid grid-cols-3 gap-4">
+               <button 
+                onClick={() => addCommand('L')}
+                disabled={isAnimating || commands.length >= currentLevel.maxCommands}
+                className="bg-orange-500 hover:bg-orange-400 disabled:opacity-50 text-white rounded-2xl p-4 shadow-[0_6px_0_rgb(194,65,12)] active:shadow-none active:translate-y-1 flex flex-col items-center gap-1 transition-all transform hover:scale-[1.02]"
+              >
+                <ArrowLeft className="w-8 h-8 md:w-10 md:h-10" />
+                <span className="font-black text-sm md:text-base">左轉</span>
+              </button>
 
-              <button 
-                onClick={() => addCommand('R')}
-                disabled={isAnimating}
-                className="bg-green-500 hover:bg-green-400 disabled:opacity-50 text-white rounded-2xl p-3 md:p-4 shadow-[0_4px_0_rgb(21,128,61)] active:shadow-none active:translate-y-1 flex flex-col items-center gap-1 transition-all"
-              >
-                <ArrowRight className="w-6 h-6 md:w-8 md:h-8" />
-                <span className="font-bold text-xs md:text-sm">右轉</span>
-              </button>
-            </div>
+              <button 
+                onClick={() => addCommand('F')}
+                disabled={isAnimating || commands.length >= currentLevel.maxCommands}
+                className="bg-blue-500 hover:bg-blue-400 disabled:opacity-50 text-white rounded-2xl p-4 shadow-[0_6px_0_rgb(30,58,138)] active:shadow-none active:translate-y-1 flex flex-col items-center gap-1 transition-all transform hover:scale-[1.02]"
+              >
+                <ArrowUp className="w-8 h-8 md:w-10 md:h-10" />
+                <span className="font-black text-sm md:text-base">向前</span>
+              </button>
 
-            {/* Action Buttons */}
-            <div className="mt-auto flex gap-3">
-              <button 
-                onClick={resetLevel}
-                disabled={isAnimating}
-                className="flex-1 bg-slate-200 text-slate-600 font-bold py-4 rounded-xl hover:bg-slate-300 disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                <RotateCcw size={18} /> 重來
-              </button>
-              <button 
-                onClick={runSimulation}
-                disabled={isAnimating || commands.length === 0}
-                className="flex-[2] bg-yellow-400 text-blue-900 font-black text-xl py-4 rounded-xl shadow-[0_4px_0_rgb(180,83,9)] active:shadow-none active:translate-y-1 hover:bg-yellow-300 disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                <Play fill="currentColor" /> 開始走！
-              </button>
-            </div>
+              <button 
+                onClick={() => addCommand('R')}
+                disabled={isAnimating || commands.length >= currentLevel.maxCommands}
+                className="bg-green-500 hover:bg-green-400 disabled:opacity-50 text-white rounded-2xl p-4 shadow-[0_6px_0_rgb(21,128,61)] active:shadow-none active:translate-y-1 flex flex-col items-center gap-1 transition-all transform hover:scale-[1.02]"
+              >
+                <ArrowRight className="w-8 h-8 md:w-10 md:h-10" />
+                <span className="font-black text-sm md:text-base">右轉</span>
+              </button>
+            </div>
 
-          </div>
-        </div>
-      </div>
-    );
-  }
+            {/* Action Buttons */}
+            <div className="mt-auto flex gap-4">
+              <button 
+                onClick={resetLevel}
+                disabled={isAnimating}
+                className="flex-1 bg-slate-200 text-slate-700 font-bold py-4 rounded-xl hover:bg-slate-300 disabled:opacity-50 flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all"
+              >
+                <RotateCcw size={20} /> 重設關卡
+              </button>
+              <button 
+                onClick={runSimulation}
+                disabled={isAnimating || commands.length === 0 || errorIndex !== -1}
+                className="flex-[2] bg-yellow-400 text-blue-900 font-black text-xl py-4 rounded-xl shadow-[0_6px_0_rgb(180,83,9)] active:shadow-none active:translate-y-1 hover:bg-yellow-300 disabled:opacity-50 flex items-center justify-center gap-2 transition-all transform hover:scale-[1.02]"
+              >
+                <Play fill="currentColor" size={24} /> 運行程式
+              </button>
+            </div>
 
-  // Page 4: Error
-  if (page === 4) {
-    return (
-      <div className="min-h-screen bg-red-50 flex flex-col items-center justify-center p-4 text-center">
-        <div className="bg-white p-8 rounded-3xl shadow-xl max-w-sm w-full border-4 border-red-100">
-          <RobotIcon className="w-32 h-32 mx-auto mb-6" mood="sad" />
-          <h2 className="text-2xl font-bold text-red-600 mb-2">哎呀！好痛喔！</h2>
-          <p className="text-slate-600 mb-8">
-            我撞到牆壁或是迷路了...<br/>
-            拜託幫我檢查紅色的指令，再試一次！
-          </p>
-          <button 
-            onClick={() => { setPage(3); setRobotState(currentLevel.start); setExecutionStep(-1); setIsAnimating(false); setErrorIndex(-1); }}
-            className="w-full py-3 bg-red-500 hover:bg-red-400 text-white font-bold rounded-xl shadow-lg flex items-center justify-center gap-2"
-          >
-            <RefreshCw size={20} /> 再試一次
-          </button>
-        </div>
-      </div>
-    );
-  }
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-  // Page 5: Success
-  if (page === 5) {
-    return (
-      <div className="min-h-screen bg-green-50 flex flex-col items-center justify-center p-4 text-center overflow-hidden">
-        {/* Confetti Background Effect */}
-        <div className="absolute inset-0 pointer-events-none opacity-30">
-          {[...Array(20)].map((_, i) => (
-            <div 
-              key={i} 
-              className="absolute w-4 h-4 rounded-full bg-yellow-400 animate-bounce"
-              style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-                animationDelay: `${Math.random()}s`,
-                backgroundColor: ['#FBBF24', '#34D399', '#60A5FA', '#F472B6'][Math.floor(Math.random() * 4)]
-              }}
-            />
-          ))}
-        </div>
+  // Page 4: Error
+  if (page === 4) {
+    return (
+      <div className="min-h-screen bg-red-100 flex flex-col items-center justify-center p-4 text-center">
+        <div className="bg-white p-10 rounded-3xl shadow-2xl max-w-sm w-full border-4 border-red-300 transform scale-100 animate-in fade-in zoom-in duration-500">
+          <RobotIcon className="w-32 h-32 mx-auto mb-6" mood="error" />
+          <h2 className="text-3xl font-black text-red-700 mb-2">程式出錯了！</h2>
+          <p className="text-slate-600 mb-8 font-medium">
+            我撞到牆壁/邊緣，或是在終點前指令用完了。<br/>
+            請回到 Level {currentLevel.id} 檢查**紅色的指令**！
+          </p>
+          <button 
+            onClick={() => { setPage(3); setRobotState(currentLevel.start); setExecutionStep(-1); setIsAnimating(false); setErrorIndex(-1); }}
+            className="w-full py-4 bg-red-500 hover:bg-red-600 text-white font-black rounded-xl shadow-[0_6px_0_rgb(153,27,27)] active:shadow-none active:translate-y-1 flex items-center justify-center gap-2 transition-all"
+          >
+            <RefreshCw size={20} /> 回到地圖修改
+          </button>
+        </div>
+      </div>
+    );
+  }
 
-        <div className="bg-white p-10 rounded-3xl shadow-2xl max-w-sm w-full relative z-10 border-4 border-green-200">
-          <div className="mb-6">
-            <RobotIcon className="w-40 h-40 mx-auto" mood="dance" />
-          </div>
-          <h2 className="text-3xl font-black text-green-600 mb-2">過關了！</h2>
-          <p className="text-slate-600 mb-8 font-medium">
-            你成功完成了 Level {currentLevel.id}！<br/>
-            {currentLevelIndex === 2 ? "你已經通過了所有考驗！" : "準備好接受下一個挑戰了嗎？"}
-          </p>
-          <button 
-            onClick={() => setPage(7)}
-            className="w-full py-4 bg-gradient-to-r from-yellow-400 to-orange-400 hover:from-yellow-300 hover:to-orange-300 text-white font-black text-xl rounded-xl shadow-lg transform hover:scale-105 transition-all flex items-center justify-center gap-2"
-          >
-            <Trophy fill="currentColor" /> 領取證書
-          </button>
-        </div>
-      </div>
-    );
-  }
+  // Page 5: Success
+  if (page === 5) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-green-100 to-teal-200 flex flex-col items-center justify-center p-4 text-center relative overflow-hidden">
+        {/* Confetti Background Effect */}
+        <div className="absolute inset-0 pointer-events-none opacity-50 overflow-hidden">
+          {/* Simplified confetti effect */}
+          {[...Array(15)].map((_, i) => (
+            <div 
+              key={i} 
+              className="absolute w-3 h-3 rounded-full animate-spin"
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+                animationDelay: `${Math.random() * 2}s`,
+                backgroundColor: ['#FBBF24', '#34D399', '#60A5FA', '#F472B6'][Math.floor(Math.random() * 4)],
+                animationDuration: `${2 + Math.random() * 2}s`,
+              }}
+            />
+          ))}
+        </div>
 
-  // Page 7: Certificate
-  if (page === 7) {
-    return (
-      <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-4 text-center relative overflow-hidden">
-        {/* Shiny Background */}
-        <div className="absolute inset-0 bg-gradient-to-b from-indigo-900 to-purple-900"></div>
-        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-30"></div>
-        
-        {/* Spotlight Effect */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-1/2 bg-gradient-to-b from-yellow-300/20 to-transparent blur-3xl rounded-full pointer-events-none"></div>
+        <div className="bg-white p-10 rounded-3xl shadow-2xl max-w-sm w-full relative z-10 border-4 border-green-400 transform scale-100 animate-in fade-in zoom-in duration-500">
+          <div className="mb-6">
+            <RobotIcon className="w-40 h-40 mx-auto" mood="dance" />
+          </div>
+          <h2 className="text-4xl font-black text-green-600 mb-2">太棒了！過關！</h2>
+          <p className="text-slate-700 mb-8 font-medium">
+            你成功完成了 Level {currentLevel.id}！<br/>
+            {currentLevelIndex === LEVELS.length - 1 ? "你已經是程式設計大師了！" : "下一個挑戰正在等你！"}
+          </p>
+          <button 
+            onClick={() => setPage(7)}
+            className="w-full py-4 bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-300 hover:to-orange-400 text-white font-black text-xl rounded-xl shadow-[0_6px_0_rgb(202,138,4)] active:shadow-none active:translate-y-1 transform hover:scale-[1.02] transition-all flex items-center justify-center gap-2"
+          >
+            <Trophy fill="currentColor" /> 領取榮耀證書
+          </button>
+        </div>
+      </div>
+    );
+  }
 
-        <div className="relative z-10 max-w-md w-full bg-white/10 backdrop-blur-lg border border-white/30 p-8 rounded-3xl shadow-2xl flex flex-col items-center">
-          
-          <div className="bg-yellow-400 text-blue-900 px-6 py-2 rounded-full font-bold mb-6 shadow-lg flex items-center gap-2">
-            <Star fill="currentColor" size={16} /> 恭喜完成 Level {currentLevel.id} <Star fill="currentColor" size={16} />
-          </div>
+  // Page 7: Certificate
+  if (page === 7) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-4 text-center relative overflow-hidden">
+        {/* Background Effect */}
+        <div className="absolute inset-0 bg-gradient-to-b from-indigo-900 to-purple-900"></div>
+        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-30"></div>
+        
+        {/* Certificate Card */}
+        <div className="relative z-10 max-w-lg w-full bg-white/10 backdrop-blur-lg border-4 border-yellow-400 p-8 rounded-3xl shadow-2xl flex flex-col items-center transform scale-100 animate-in fade-in duration-700">
+          
+          <div className="bg-yellow-400 text-blue-900 px-6 py-2 rounded-full font-black mb-6 shadow-lg flex items-center gap-2 transform rotate-2">
+            <Star fill="currentColor" size={20} /> 榮耀完成 Level {currentLevel.id} <Star fill="currentColor" size={20} />
+          </div>
 
-          <h1 className={`text-4xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r mb-2 drop-shadow-sm ${currentLevel.certColor}`}>
-            {currentLevel.certTitle}
-          </h1>
-          
-          <div className="w-full h-1 bg-gradient-to-r from-transparent via-white/50 to-transparent my-6"></div>
+          <h1 className={`text-5xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-300 mb-4 drop-shadow-md ${currentLevel.certColor}`}>
+            {currentLevel.certTitle}
+          </h1>
+          
+          <p className="text-xl text-yellow-300 font-bold mb-2">
+            頒發給
+          </p>
+          <p className="text-3xl text-white font-black mb-6 border-b-4 border-white/50 pb-2">
+            {SCHOOL_NAME} 程式設計高手
+          </p>
 
-          <p className="text-xl text-white font-medium mb-4">
-            {SCHOOL_NAME}
-          </p>
-          
-          <p className="text-blue-200 text-sm mb-8">
-            在 <span className="text-white font-bold">{currentLevel.name}</span> 展現了超凡的智慧！
-          </p>
+          <p className="text-blue-200 text-sm mb-8">
+            在 <span className="text-white font-bold">{currentLevel.name}</span> 挑戰中，成功地規劃了精確的程式路徑，展現了卓越的邏輯思維與問題解決能力。
+          </p>
 
-          <div className="bg-white/20 p-4 rounded-xl flex items-center gap-4 w-full mb-6">
-            <div className="bg-white/20 p-3 rounded-full">
-              <Camera className="text-white" size={24} />
-            </div>
-            <div className="text-left">
-              <p className="text-white font-bold text-sm">跟我合照</p>
-              <p className="text-blue-200 text-xs">紀念這一刻的榮耀！</p>
-            </div>
-          </div>
-          
-          <div className="flex gap-4 w-full">
-            <button 
-                onClick={resetGameFull}
-                className="flex-1 py-3 text-white/70 hover:text-white text-sm bg-white/10 rounded-xl hover:bg-white/20 transition-all"
-            >
-                回首頁
-            </button>
-            
-            {currentLevelIndex < LEVELS.length - 1 && (
-                <button 
-                    onClick={nextLevel}
-                    className="flex-1 py-3 bg-yellow-500 hover:bg-yellow-400 text-blue-900 font-bold rounded-xl shadow-lg flex items-center justify-center gap-1"
-                >
-                    下一關 <ChevronRight size={18} />
-                </button>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  }
+          <div className="flex gap-4 w-full">
+            <button 
+                onClick={resetGameFull}
+                className="flex-1 py-3 text-white/70 hover:text-white text-base bg-white/10 rounded-xl hover:bg-white/20 transition-all shadow-md"
+            >
+                <Home size={18} className="inline-block mr-1" /> 回首頁
+            </button>
+            
+            {currentLevelIndex < LEVELS.length - 1 ? (
+                <button 
+                    onClick={nextLevel}
+                    className="flex-1 py-3 bg-yellow-500 hover:bg-yellow-400 text-blue-900 font-black rounded-xl shadow-[0_4px_0_rgb(202,138,4)] active:shadow-none active:translate-y-1 flex items-center justify-center gap-1 transition-all"
+                >
+                    下一關挑戰 <ChevronRight size={18} />
+                </button>
+            ) : (
+                <button 
+                    onClick={resetGameFull}
+                    className="flex-1 py-3 bg-green-500 hover:bg-green-600 text-white font-black rounded-xl shadow-[0_4px_0_rgb(22,101,52)] active:shadow-none active:translate-y-1 flex items-center justify-center gap-1 transition-all"
+                >
+                    <Trophy size={18} /> 完成所有挑戰！
+                </button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-  return null;
+  return null;
 }
